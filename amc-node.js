@@ -19,7 +19,6 @@ puppeteer.use(StealthPlugin());
 // ─── Config ─────────────────────────────────────────────────────────────────
 
 const MOVIES = [
-  "project hail mary",
   "the odyssey",
   "dune: part three",
   "dune part three",
@@ -28,6 +27,8 @@ const MOVIES = [
   "avengers: doomsday",
   "avengers doomsday",
 ];
+
+const MIN_SHOWTIME_MINUTES = 13 * 60;
 
 const THEATER_URL =
   "https://www.amctheatres.com/movie-theatres/new-york-city/amc-lincoln-square-13/showtimes";
@@ -60,6 +61,17 @@ function ts() {
 
 function log(msg) {
   console.log(`[${ts()}] ${msg}`);
+}
+
+function parseShowtimeMinutes(timeText) {
+  const m = timeText.trim().match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/i);
+  if (!m) return null;
+  let h = parseInt(m[1], 10);
+  const min = parseInt(m[2], 10);
+  const ampm = m[3].toLowerCase();
+  if (ampm === "pm" && h !== 12) h += 12;
+  if (ampm === "am" && h === 12) h = 0;
+  return h * 60 + min;
 }
 
 async function sendEmail(subject, html) {
@@ -196,6 +208,12 @@ async function runFullScan(page) {
     for (const st of showtimes) {
       if (st.soldOut) {
         log(`    ${st.time} ${st.movie} — SOLD OUT`);
+        continue;
+      }
+
+      const stMinutes = parseShowtimeMinutes(st.time);
+      if (stMinutes !== null && stMinutes < MIN_SHOWTIME_MINUTES) {
+        log(`    ${st.time} ${st.movie} — before 1:00pm, skipping`);
         continue;
       }
 
