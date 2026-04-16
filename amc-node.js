@@ -34,6 +34,8 @@ const THEATER_URL =
 
 const TEST_MODE = process.env.TEST_MODE === "true" || process.env.TEST_MODE === "1";
 
+const MAX_DATES = 14;
+
 const TARGET_ROWS = TEST_MODE
   ? ["A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P"]
   : ["F", "G", "H", "J"];
@@ -177,8 +179,9 @@ async function runFullScan(page) {
   log(`Target: ${MOVIES.join(", ")}`);
   log(`Seats: rows ${TARGET_ROWS.join("/")} cols ${TARGET_COL_MIN}-${TARGET_COL_MAX}`);
 
-  const dates = await getAvailableDates(page);
-  log(`${dates.length} dates with showtimes${dates.length ? ` (${dates[0]} -> ${dates[dates.length - 1]})` : ""}`);
+  const allDates = await getAvailableDates(page);
+  const dates = allDates.slice(0, MAX_DATES);
+  log(`Scanning ${dates.length} of ${allDates.length} dates${dates.length ? ` (${dates[0]} -> ${dates[dates.length - 1]})` : ""}`);
 
   const findings = [];
 
