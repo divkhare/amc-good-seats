@@ -1,123 +1,122 @@
-# AMC Good Seats
+# AMC IMAX 70mm Seat Watcher
 
-## Instructions
-1. Modify the like `MOVIE_NAME`,  `SHOWTIME_ATTRIBUTE`, constants on top of [amc-script](/amc-script.js) (See [amc-constants](/amc-constants.js) for different values).
-   1. `MOVIE_NAME` - set the movie name
-   2. `DAYS` - defines how many days forward to look at
-   3. `SHOWTIME_ATTRIBUTE` - can be `imax`, `dolby`, `laser`, etc
-   4. `CHECK_ONLY_TUESDAYS` - set to `true` if only interested in `Tuesday`s (discount day at AMC)
-2. Copy and run the script to the DevTools console on the [AMC website](https://www.amctheatres.com/).
-3. Wait a couple of minutes and see the output that contains good seats found.
-4. Buy the tickets.
-5. Enjoy the movie!
+Watches AMC Lincoln Square 13 (NYC) for good seats at IMAX 70mm showings and emails a notification the moment seats open up.
 
-## Good Seats Grid
+Runs on **GitHub Actions** (free) every ~10 minutes. When a showtime has 2 or more seats in the target zone, each recipient gets an email with the count, seat numbers, and a booking link.
 
-Seats that fall into the green rectangle are considered good.
+---
 
-<img width="500" alt="image" src="https://github.com/NameFILIP/amc-good-seats/assets/834796/badbd791-f3f7-42b3-bd35-2feac4efdf3a">
+## What it's currently watching
 
-## Sample Output
+- **Theater:** AMC Lincoln Square 13
+- **Format:** IMAX 70mm
+- **Movies:** The Odyssey, Dune: Part Three, Spider-Man: Brand New Day, Avengers: Doomsday
+- **Seats:** rows F/G/H/J, columns 9–39 (the center "sweet spot")
+- **Showtimes:** 1:00pm or later
+- **Window:** next 14 days
+- **Threshold:** email sent when a showtime has **2+ seats** in the zone
+- **Recipients:** set in the repo's `NOTIFY_EMAIL` secret (comma-separated)
 
+---
+
+## How to change what's being watched
+
+All tweakable settings live at the top of [`amc-node.js`](./amc-node.js). Edit the file, commit, push — the next run uses the new values.
+
+| Want to change… | Edit this |
+| --- | --- |
+| Which movies to watch | `MOVIES` array (lowercase, one entry per title — add variants like `"dune: part three"` AND `"dune part three"` to handle punctuation) |
+| Which rows count as good | `TARGET_ROWS` |
+| Which columns count as good | `TARGET_COL_MIN`, `TARGET_COL_MAX` |
+| Earliest showtime | `MIN_SHOWTIME_MINUTES` (e.g., `13 * 60` = 1:00pm) |
+| Minimum seats to trigger email | `MIN_SEATS_FOR_EMAIL` |
+| How many days ahead to scan | `MAX_DATES` |
+| Which theater | `THEATER_URL` (Lincoln Square for now; any AMC showtimes URL will work) |
+
+### Quick edit workflow
+
+1. Open `amc-node.js` in GitHub's web editor (press `.` on the repo page, or click the file → pencil icon).
+2. Change the value.
+3. Commit directly to `main`. That push triggers a run within ~30 seconds — you can watch it in the **Actions** tab.
+
+---
+
+## Managing email recipients
+
+Recipients are stored as a GitHub repo secret called `NOTIFY_EMAIL` (comma-separated, no spaces needed).
+
+**To add/change recipients**, from any terminal with `gh` installed and logged in:
+
+```bash
+gh secret set NOTIFY_EMAIL --repo divkhare/amc-good-seats --body 'you@example.com,friend@example.com'
 ```
-Checking AMC: amc-orpheum-7
-Checking AMC: amc-lincoln-square-13
-Checking AMC: amc-84th-street-6
-Checking AMC: amc-magic-johnson-harlem-9
-Checking AMC: amc-empire-25
-{
-  "2024-03-12-Tuesday": {
-    "12:00:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-12/amc-empire-25/all/118568406",
-      "goodSeats": "G7,G9,G10,G11,G12,H10,H11,H12,H13,J8,J10,J13,J14,J15,K8,K9,K10,K11,K14,K15,M9,N7,N11,N12"
-    },
-    "3:40:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-12/amc-empire-25/all/118568407",
-      "goodSeats": "G7,G9,G10,G11,G12,H7,H10,H13,J8,J9,J13,K8,K9,K10,K14,M7,M8,N7,N8,N9,N12"
-    },
-    "11:00:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-12/amc-empire-25/all/118568405",
-      "goodSeats": "G7,G8,G9,G10,G11,G12,H10,H11,H12,H13,J8,J9,J10,J11,J12,J13,J14,J15,K8,K9,K12,K13,K14,K15,M7,M8,M9,M10,M11,M12,N7,N8,N9,N10,N11,N12"
-    }
-  },
-  "2024-03-19-Tuesday": {
-    "12:00:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-19/amc-empire-25/all/118568432",
-      "goodSeats": "G7,G8,G9,G10,G11,G12,H7,H8,H9,H10,H11,H12,H13,J8,J9,J10,J11,J12,J13,J14,J15,K8,K9,K10,K11,K12,K13,K14,K15,M7,M8,M9,M10,M11,M12,N7,N8,N9,N10,N11,N12"
-    },
-    "3:40:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-19/amc-empire-25/all/118568431",
-      "goodSeats": "G7,G8,G9,G10,G11,G12,H7,H10,H11,H12,H13,J8,J9,J10,J11,J12,J13,J14,J15,K8,K9,K10,K11,K12,K13,K14,K15,M7,M8,M9,M11,M12,N7,N8,N9,N10,N11,N12"
-    },
-    "7:15:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-19/amc-empire-25/all/118568429",
-      "goodSeats": "N9,N12"
-    },
-    "11:00:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-19/amc-empire-25/all/118568430",
-      "goodSeats": "G7,G8,G9,G10,G11,G12,H7,H8,H9,H10,H11,H12,H13,J8,J9,J10,J11,J12,J13,J14,J15,K8,K9,K10,K11,K14,K15,M7,M8,M11,M12,N7,N8,N9,N10,N11,N12"
-    }
-  }
-}
-Checking AMC: amc-kips-bay-15
-{
-  "2024-03-12-Tuesday": {
-    "12:00:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-12/amc-kips-bay-15/all/118614857",
-      "goodSeats": "F9,F10,F11,F12,F16,F17,G9,G10,G13,G15,G16,G17,H9,H10,H14,H16,H17,J10,J11,J15,J16,K9,K10,K13"
-    },
-    "3:45:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-12/amc-kips-bay-15/all/118614858",
-      "goodSeats": "F9,F10,F11,F16,F17,G12,J17,K9,K17"
-    },
-    "11:00:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-12/amc-kips-bay-15/all/118614860",
-      "goodSeats": "F9,F10,F11,F12,F13,F14,F15,F16,F17,G9,G10,G11,G12,G15,G16,G17,H9,H10,H11,H12,H13,H14,H15,H16,H17,J9,J10,J11,J12,J15,J16,J17,K9,K10,K11,K12,K13,K14,K15,K16,K17"
-    }
-  },
-  "2024-03-19-Tuesday": {
-    "3:15:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-19/amc-kips-bay-15/all/118614884",
-      "goodSeats": "F9,F10,F11,F12,F13,F14,F15,F16,F17,G9,G10,G11,G12,G13,G15,G16,G17,H9,H10,H11,H12,H13,H14,H15,H16,H17,J9,J10,J11,J16,J17,K9,K10,K11,K12,K13,K14,K15,K16,K17"
-    },
-    "10:35:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-19/amc-kips-bay-15/all/118614886",
-      "goodSeats": "F9,F10,F11,F12,F13,F14,F15,F16,F17,G9,G10,G11,G12,G13,G14,G15,G16,G17,H9,H10,H11,H12,H15,H16,H17,J9,J17,K9,K10,K11,K12,K13,K14,K15,K16,K17"
-    }
-  }
-}
-Checking AMC: amc-34th-street-14
-{
-  "2024-03-12-Tuesday": {
-    "11:45:00 AM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-12/amc-34th-street-14/all/118589792",
-      "goodSeats": "E7,E8,E11,E12,F7,F8,F10,F12,G12,H9,H11"
-    },
-    "3:20:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-12/amc-34th-street-14/all/118589793",
-      "goodSeats": "E7,E8,E11,E12,F8,F12,G7,G11"
-    },
-    "10:35:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-12/amc-34th-street-14/all/118589795",
-      "goodSeats": "E7,E8,G11"
-    }
-  },
-  "2024-03-19-Tuesday": {
-    "2:20:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-19/amc-34th-street-14/all/118589732",
-      "goodSeats": "E7,E8,E9,E10,E11,E12,F7,F8,F9,F10,F11,F12,G7,G8,G9,G11,G12,H7,H8,H9,H10,H11,H12"
-    },
-    "6:00:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-19/amc-34th-street-14/all/118589733",
-      "goodSeats": "G10"
-    },
-    "9:35:00 PM": {
-      "url": "https://www.amctheatres.com/showtimes/all/2024-03-19/amc-34th-street-14/all/118589734",
-      "goodSeats": "E7,E8,E9,E10,E11,E12,F7,F8,F12,G7,G12,H7,H8"
-    }
-  }
-}
-Checking AMC: amc-19th-st-east-6
-Checking AMC: amc-village-7
-Checking AMC: amc-newport-centre-11
+
+Or do it in the UI: **Settings → Secrets and variables → Actions → `NOTIFY_EMAIL` → Update**.
+
+---
+
+## How to trigger a run manually (test)
+
+**Quick test with a widened seat zone** (this will definitely find and email seats, useful for confirming the pipeline works):
+
+```bash
+gh workflow run check-seats.yml --repo divkhare/amc-good-seats -f test_mode=true
 ```
+
+**Normal run** (narrow seat zone — may find nothing):
+
+```bash
+gh workflow run check-seats.yml --repo divkhare/amc-good-seats
+```
+
+Or use the GitHub UI: **Actions → Check AMC Seats → Run workflow**.
+
+---
+
+## Where to see it running
+
+- Live run list: **https://github.com/divkhare/amc-good-seats/actions**
+- Click any run to see full logs — every showtime scanned, seat counts, and email-send confirmations.
+
+---
+
+## Troubleshooting
+
+**"I'm not getting emails"**
+- Check spam (Gmail often filters messages sent from yourself to yourself).
+- Check the latest run's logs. If you see `Email sent to …` lines, the delivery succeeded from our end — it's a Gmail inbox issue.
+- If you see `Email send failed: Invalid login`, the `GMAIL_APP_PASSWORD` secret is wrong. Regenerate at https://myaccount.google.com/apppasswords and update:
+  ```bash
+  gh secret set GMAIL_APP_PASSWORD --repo divkhare/amc-good-seats --body 'new-app-password'
+  ```
+
+**"Actions aren't running"**
+- Scheduled runs can pause after **60 days of repo inactivity**. A single commit resets the clock:
+  ```bash
+  git commit --allow-empty -m "Keep scheduler alive" && git push
+  ```
+
+**"The scan is hitting the 15-min timeout"**
+- Lower `MAX_DATES` in `amc-node.js` (e.g., to 7).
+
+---
+
+## How it works (one paragraph)
+
+GitHub Actions spins up a fresh Ubuntu VM every 10 minutes (and on every push to `main`). It runs `amc-node.js`, which uses headless Chrome via Puppeteer to open the AMC showtimes page, click through each date, identify IMAX 70mm showings of the movies in the watch list, then loads each showtime's seat map and counts available seats in the target zone. If a showtime has 2+ seats, it sends an email immediately via Gmail SMTP (using an app password) to every recipient in `NOTIFY_EMAIL`. The VM is then torn down — nothing persists between runs.
+
+---
+
+## Required GitHub secrets
+
+| Secret | What it is |
+| --- | --- |
+| `GMAIL_USER` | Gmail address to send from (e.g., `divyanshukhare@gmail.com`) |
+| `GMAIL_APP_PASSWORD` | 16-char Gmail app password (generate at https://myaccount.google.com/apppasswords — requires 2FA) |
+| `NOTIFY_EMAIL` | Comma-separated list of recipient addresses |
+
+---
+
+## Legacy: DevTools console script
+
+The original [`amc-script.js`](./amc-script.js) runs in the browser DevTools console on the AMC site — useful for ad-hoc, one-off seat checks without touching this repo. See the [original project](https://github.com/NameFILIP/amc-good-seats) for that workflow.
