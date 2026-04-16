@@ -1,0 +1,15 @@
+{
+  "name": "amc-good-seats",
+  "version": "1.0.0",
+  "description": "Watch AMC Lincoln Square IMAX 70mm for target seats and email when available.",
+  "private": true,
+  "scripts": {
+    "start": "node amc-node.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "puppeteer": "^24.41.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}

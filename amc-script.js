@@ -2,7 +2,7 @@
  * Run this script from DevTools console on the AMC website.
  */
 
-const MOVIE_NAME = "Dune: Part Two";
+const MOVIE_NAME = "Hail Mary";
 
 /*
  * The list below is the AMC Theaters in NYC
