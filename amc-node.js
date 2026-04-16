@@ -35,6 +35,7 @@ const THEATER_URL =
 const TEST_MODE = process.env.TEST_MODE === "true" || process.env.TEST_MODE === "1";
 
 const MAX_DATES = 14;
+const MIN_SEATS_FOR_EMAIL = 2;
 
 const TARGET_ROWS = TEST_MODE
   ? ["A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P"]
@@ -183,7 +184,8 @@ async function runFullScan(page) {
   const dates = allDates.slice(0, MAX_DATES);
   log(`Scanning ${dates.length} of ${allDates.length} dates${dates.length ? ` (${dates[0]} -> ${dates[dates.length - 1]})` : ""}`);
 
-  const findings = [];
+  let emailsSent = 0;
+  let totalHits = 0;
 
   for (const date of dates) {
     const showtimes = await getShowtimes(page, date);
@@ -198,40 +200,35 @@ async function runFullScan(page) {
       }
 
       const seats = await getAvailableSeats(page, st.id);
-      if (seats.length > 0) {
-        log(`    ${st.time} ${st.movie} — ${seats.length} seats: ${seats.join(", ")}`);
-        findings.push({ date, time: st.time, movie: st.movie, id: st.id, seats });
-      } else {
+      if (seats.length === 0) {
         log(`    ${st.time} ${st.movie} — no target seats`);
+      } else if (seats.length < MIN_SEATS_FOR_EMAIL) {
+        log(`    ${st.time} ${st.movie} — ${seats.length} seat (below ${MIN_SEATS_FOR_EMAIL}-seat threshold): ${seats.join(", ")}`);
+      } else {
+        totalHits++;
+        log(`    ${st.time} ${st.movie} — ${seats.length} seats: ${seats.join(", ")} → emailing`);
+        const subject = `AMC IMAX 70mm: ${seats.length} seats — ${st.movie} · ${date} ${st.time}`;
+        const html = `
+<div style="font-family:system-ui,sans-serif;">
+  <h2 style="margin:0 0 8px 0;">${st.movie}</h2>
+  <p style="margin:0 0 8px 0;color:#555;">${date} &middot; ${st.time}</p>
+  <p style="margin:0 0 8px 0;"><strong>${seats.length} seat${seats.length === 1 ? "" : "s"} available</strong> in target zone (rows ${TARGET_ROWS.join("/")}, cols ${TARGET_COL_MIN}-${TARGET_COL_MAX}):</p>
+  <p style="margin:0 0 12px 0;font-family:ui-monospace,monospace;">${seats.join(", ")}</p>
+  <p style="margin:0;"><a href="https://www.amctheatres.com/showtimes/${st.id}">Book now →</a></p>
+</div>`;
+        await sendEmail(subject, html);
+        emailsSent++;
       }
 
       await sleep(1000 + Math.random() * 1000);
     }
   }
 
-  if (findings.length === 0) {
-    log("No target seats found this scan.");
-    return;
+  if (totalHits === 0) {
+    log(`No showtimes with ${MIN_SEATS_FOR_EMAIL}+ target seats found this scan.`);
+  } else {
+    log(`Scan complete. ${emailsSent} email(s) sent for ${totalHits} showtime hit(s).`);
   }
-
-  log(`Found ${findings.length} showtime(s) with target seats. Sending email.`);
-
-  const subject = `AMC IMAX 70mm: ${findings.length} showtime(s) with target seats`;
-  const html =
-    `<p>Target seats available (rows ${TARGET_ROWS.join("/")}, cols ${TARGET_COL_MIN}-${TARGET_COL_MAX}):</p>` +
-    findings
-      .map(
-        (f) => `
-<div style="margin-bottom:16px;padding:12px;border-left:3px solid #d32f2f;">
-  <div><strong>${f.movie}</strong></div>
-  <div>${f.date} &middot; ${f.time}</div>
-  <div>Seats (${f.seats.length}): ${f.seats.join(", ")}</div>
-  <div><a href="https://www.amctheatres.com/showtimes/${f.id}">Book now →</a></div>
-</div>`
-      )
-      .join("");
-
-  await sendEmail(subject, html);
 }
 
 // ─── Entry ──────────────────────────────────────────────────────────────────
