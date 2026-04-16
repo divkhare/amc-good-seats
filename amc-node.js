@@ -3,16 +3,17 @@
  * AMC IMAX 70mm Seat Watcher — Lincoln Square, NYC
  *
  * One-shot scan. Designed to be invoked on a schedule (GitHub Actions cron).
- * Emails a summary via Resend when target seats are available.
+ * Emails a summary via Gmail SMTP when target seats are available.
  *
  * Env vars (required for email):
- *   RESEND_API_KEY  — API key from resend.com
- *   NOTIFY_EMAIL    — recipient address
- *   RESEND_FROM     — optional, defaults to "AMC Watcher <onboarding@resend.dev>"
+ *   GMAIL_USER          — Gmail address to send from
+ *   GMAIL_APP_PASSWORD  — Gmail app password (2FA required)
+ *   NOTIFY_EMAIL        — recipient address(es), comma-separated
  */
 
 const puppeteer = require("puppeteer-extra");
 const StealthPlugin = require("puppeteer-extra-plugin-stealth");
+const nodemailer = require("nodemailer");
 puppeteer.use(StealthPlugin());
 
 // ─── Config ─────────────────────────────────────────────────────────────────
@@ -35,9 +36,12 @@ const TARGET_ROWS = ["F", "G", "H", "J"];
 const TARGET_COL_MIN = 9;
 const TARGET_COL_MAX = 39;
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL;
-const RESEND_FROM = process.env.RESEND_FROM || "AMC Watcher <onboarding@resend.dev>";
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
+const NOTIFY_EMAILS = (process.env.NOTIFY_EMAIL || "")
+  .split(",")
+  .map((e) => e.trim())
+  .filter(Boolean);
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -52,27 +56,24 @@ function log(msg) {
 }
 
 async function sendEmail(subject, html) {
-  if (!RESEND_API_KEY || !NOTIFY_EMAIL) {
-    log("RESEND_API_KEY or NOTIFY_EMAIL not set — skipping email.");
+  if (!GMAIL_USER || !GMAIL_APP_PASSWORD || NOTIFY_EMAILS.length === 0) {
+    log("GMAIL_USER / GMAIL_APP_PASSWORD / NOTIFY_EMAIL not set — skipping email.");
     return;
   }
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: RESEND_FROM,
-      to: [NOTIFY_EMAIL],
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+  });
+  try {
+    await transporter.sendMail({
+      from: `"AMC Watcher" <${GMAIL_USER}>`,
+      to: NOTIFY_EMAILS,
       subject,
       html,
-    }),
-  });
-  if (!res.ok) {
-    log(`Email send failed: ${res.status} ${await res.text()}`);
-  } else {
-    log(`Email sent to ${NOTIFY_EMAIL}.`);
+    });
+    log(`Email sent to ${NOTIFY_EMAILS.join(", ")}.`);
+  } catch (err) {
+    log(`Email send failed: ${err.message}`);
   }
 }
 
