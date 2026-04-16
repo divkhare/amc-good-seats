@@ -32,9 +32,13 @@ const MOVIES = [
 const THEATER_URL =
   "https://www.amctheatres.com/movie-theatres/new-york-city/amc-lincoln-square-13/showtimes";
 
-const TARGET_ROWS = ["F", "G", "H", "J"];
-const TARGET_COL_MIN = 9;
-const TARGET_COL_MAX = 39;
+const TEST_MODE = process.env.TEST_MODE === "true" || process.env.TEST_MODE === "1";
+
+const TARGET_ROWS = TEST_MODE
+  ? ["A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P"]
+  : ["F", "G", "H", "J"];
+const TARGET_COL_MIN = TEST_MODE ? 1 : 9;
+const TARGET_COL_MAX = TEST_MODE ? 100 : 39;
 
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
